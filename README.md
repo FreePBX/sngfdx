@@ -1,5 +1,5 @@
 <mark>This sngfd12 repo was archived on September 21, 2026.
-Please instead see https://github.com/FreePBX/sng_freepbx_distro_factory 👀</mark>
+Please instead see https://github.com/FreePBX/sngfdx 👀</mark>
 
 # abuild-fpbx-installer-iso
 
