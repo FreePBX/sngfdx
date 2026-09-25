@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025-2026 Sangoma US Inc.
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/output.yml
+# file: sngfdx/tasks/output.yml
 
 # TODO: the hashes do not yet take into account the
 #       preloaded packages or fixed DAHDI kernels
@@ -452,7 +452,7 @@
       -   "/"
       - --
       - -preparer_id
-      -   "{{ str_script_name }} sha256={{ str_sngfd_sha256 }}"
+      -   "{{ str_script_name }} sha256={{ str_sngfdx_sha256 }}"
       - -publisher
       -   "{{ str_vendor }} {{ str_vendor_url }}"
       - -application_id

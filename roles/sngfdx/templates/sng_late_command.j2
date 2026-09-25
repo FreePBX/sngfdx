@@ -5,6 +5,18 @@ set -e
 set +x
 logger -t sng "BEGIN LATE COMMAND"
 
+# progress tracking
+. /usr/share/debconf/confmodule
+db_x_loadtemplatefile /run/sngdistro.templates sngdistro
+db_progress STOP
+db_progress START 0 100 sngdistro/title
+db_progress SET 15
+db_progress INFO sngdistro/pitch
+sleep 1
+
+# helper mount for Debian 13
+mount --bind /cdrom /target/media/cdrom || true
+
 # If the 20-sangoma.cfg GRUB configuration file exists, copy it to /target/var/tmp/
 if [ -s /cdrom/20-sangoma.cfg ]; then
 	cp -a /cdrom/20-sangoma.cfg /target/var/tmp/
@@ -33,8 +45,10 @@ else
 	in-target wget -O /var/tmp/sng_freepbx_debian_install.sh https://github.com/FreePBX/sng_freepbx_debian_install/raw/master/sng_freepbx_debian_install.sh
 	in-target chmod +x /var/tmp/sng_freepbx_debian_install.sh
 
+    db_progress SET 16
 	# TODO: check if upgrade without update will hold kernel version
 	in-target apt-get update || true 
+    db_progress SET 17
 	in-target apt-get -y upgrade || true
 fi
 
@@ -76,7 +90,7 @@ ExecStartPre=/usr/bin/bash -c 'while ! ping -c 1 github.com >/dev/null 2>&1; do 
 # actually run the installer, with DAHDI drivers
 ExecStart=/usr/bin/env ASTVERSION=${asteriskversion} /usr/bin/bash /var/tmp/sng_freepbx_debian_install.sh ${shell_sng_opts}
 # if not successful, then get ready to reboot and try again
-ExecStartPost=-/bin/sh -c 'latest_log=$\$(ls -t /var/log/pbx/*.log | head -1); grep -q "Finished FreePBX 17 installation process" \$latest_log'
+ExecStartPost=-/bin/sh -c 'latest_log=$\$(ls -t /var/log/pbx/*.log | head -1); grep -q "Finished FreePBX [1-9][0-9] installation process" \$latest_log'
 # if successful, only then will next command run to prevent reinstall on next boot
 ExecStartPost=echo "Disabling sng-install-freepbx service from next boot following good install"
 ExecStartPost=/usr/bin/systemctl disable sng-install-freepbx
@@ -186,8 +200,8 @@ echo "FREEPBX INSTALLER PLACEHOLDER - STILL INSTALLING, PLEASE WAIT!!!" >> /targ
 echo "FREEPBX INSTALLER PLACEHOLDER - STILL INSTALLING, PLEASE WAIT!!!" >> /target/usr/share/base-files/motd
 echo "FREEPBX INSTALLER PLACEHOLDER - STILL INSTALLING, PLEASE WAIT!!!" >> /target/usr/share/base-files/motd
 
-sed -i "s/Debian GNU\/Linux/{{ str_our_full_name }}/" /target/etc/issue
-sed -i "s/Debian GNU\/Linux/{{ str_our_full_name }}/" /target/etc/issue.net
+echo -e "\\\e[32m{{ str_our_full_name }} {{ str_deb_version }} \\\n \\\l\n" > /target/etc/issue
+echo "{{ str_our_full_name }} {{ str_deb_version }}" > /target/etc/issue.net
 
 # no more apt proxy on next reboot and/or when it leaves the lab
 # TODO: debate merits of doing it here vs. sng-eol script below
@@ -294,8 +308,18 @@ if [ -s /cdrom/sangoma-wallpaper-for-grub.png ]; then
 	cp -a /cdrom/sangoma-wallpaper-for-grub.png /target/boot/grub
 fi
 
-# adjust the menu colors
-# TODO
+# adjust the GRUB menu colors
+cat << EOFCO > /target/etc/grub.d/09_sangoma
+{% include 'header.j2' %}
+
+echo "background_image /grub/sangoma-wallpaper-for-grub.png"
+echo "set menu_color_normal=light-green/black"
+echo "set menu_color_highlight=black/light-green"
+echo "set color_normal=light-green/black"
+echo "set color_highlight=black/light-green"
+EOFCO
+
+chmod +x /target/etc/grub.d/09_sangoma
 
 # custom GRUB defaults
 cat << EOFGD > /target/etc/default/grub.d/10-sangoma.cfg
@@ -323,8 +347,12 @@ GRUB_TERMINAL_OUTPUT="gfxterm serial"
 EOFGS
 fi
 
-# set up GRUB tune and wallpaper	
+# set up GRUB tune and wallpaper (may be redundant with a later rootskel step)
+db_progress SET 18
 in-target update-grub
+
+# as long as we are doing all the green coloring...
+in-target sed -i 's/^#\(force_color_prompt=\).*/\1yes/' /home/sangoma/.bashrc
 
 # UEFI RAID rsync EFI partitions automatically via GRUB hook
 # TODO: consider disk type (s v xv - see disk_type elsewhere)
@@ -384,6 +412,8 @@ if [ -d /sys/firmware/efi ] && [ -s /cdrom/copy_to_boot_efi2.j2 ] && [ -b /dev/s
 	in-target sfdisk --delete /dev/sdb 3 || true
 
 fi
+
+db_progress SET 20
 
 # wipe reserved part of primary disk for SSD wear-leveling (3rd partition)
 set +e
@@ -523,6 +553,21 @@ if [ $sngdiskrecipe == "slab" ]; then
 fi
 set -e
 
+# account for btrfs resize in distro 13
+set +e
+in-target btrfs filesystem resize max /
+in-target btrfs filesystem resize max /home
+in-target btrfs filesystem resize max /srv
+in-target btrfs filesystem resize max /tmp
+in-target btrfs filesystem resize max /usr
+in-target btrfs filesystem resize max /usr/local
+in-target btrfs filesystem resize max /var
+in-target btrfs filesystem resize max /var/log
+in-target btrfs filesystem resize max /var/log/audit
+in-target btrfs filesystem resize max /var/spool
+in-target btrfs filesystem resize max /var/tmp
+set -e
+
 sync
 
 # resize the file system on all 11 LVs
@@ -549,18 +594,22 @@ if [ $spicelevel != "oso" ] && [ $spicelevel != "fog" ] && [ -s /cdrom/Packages-
 	else
 		logger -t sng "Downloading additional packages from Cobbler server"
 		grep "^Filename" /target/var/spool/packages-sngfd/dists/{{ str_deb_codename }}/main/binary-amd64/Packages | cut -f7 -d/ | sed "s|^|http://${tftphost}/cobbler/links/{{ str_cob_base }}-x86_64/packages-sngfd/|" > /target/tmp/packages-sngfd.urls
+        db_progress SET 22
 		in-target wget -q -i /tmp/packages-sngfd.urls -P /var/spool/packages-sngfd/dists/{{ str_deb_codename }}/main/binary-amd64/pool/sngfd/
 	fi
 fi
 
+logger -t sng "Additional packages for FreePBX Distro ${fpbxdistro}"
 # install a bunch of things at once to speed up the shell installer later on
 # (ripped these lines right out of the shell installer)
 # EXCEPTION: libtonezone
-in-target env PHPVERSION=8.2 apt-get -y install \
+# progress tracking
+db_progress INFO sngdistro/packages
+in-target debconf-apt-progress --start
+in-target debconf-apt-progress --from 25 --to 65 -- apt-get -y install \
 	redis-server \
 	ghostscript \
 	libtiff-tools \
-	iptables-persistent \
 	net-tools \
 	rsyslog \
 	libavahi-client3 \
@@ -577,23 +626,23 @@ in-target env PHPVERSION=8.2 apt-get -y install \
 	bison \
 	flex \
 	flite \
-	php${PHPVERSION} \
-	php${PHPVERSION}-curl \
-	php${PHPVERSION}-zip \
-	php${PHPVERSION}-redis \
-	php${PHPVERSION}-cli \
-	php${PHPVERSION}-common \
-	php${PHPVERSION}-mysql \
-	php${PHPVERSION}-gd \
-	php${PHPVERSION}-mbstring \
-	php${PHPVERSION}-intl \
-	php${PHPVERSION}-xml \
-	php${PHPVERSION}-bz2 \
-	php${PHPVERSION}-ldap \
-	php${PHPVERSION}-sqlite3 \
-	php${PHPVERSION}-bcmath \
-	php${PHPVERSION}-soap \
-	php${PHPVERSION}-ssh2 \
+	php{{ str_php_version }} \
+	php{{ str_php_version }}-curl \
+	php{{ str_php_version }}-zip \
+	php{{ str_php_version }}-redis \
+	php{{ str_php_version }}-cli \
+	php{{ str_php_version }}-common \
+	php{{ str_php_version }}-mysql \
+	php{{ str_php_version }}-gd \
+	php{{ str_php_version }}-mbstring \
+	php{{ str_php_version }}-intl \
+	php{{ str_php_version }}-xml \
+	php{{ str_php_version }}-bz2 \
+	php{{ str_php_version }}-ldap \
+	php{{ str_php_version }}-sqlite3 \
+	php{{ str_php_version }}-bcmath \
+	php{{ str_php_version }}-soap \
+	php{{ str_php_version }}-ssh2 \
 	php-pear \
 	curl \
 	sox \
@@ -607,8 +656,6 @@ in-target env PHPVERSION=8.2 apt-get -y install \
 	unixodbc \
 	nodejs \
 	npm \
-	ipset \
-	iptables \
 	fail2ban \
 	htop \
 	postfix \
@@ -633,14 +680,12 @@ in-target env PHPVERSION=8.2 apt-get -y install \
 	libnss-mdns \
 	mailutils \
 	liburiparser1 \
-	libavdevice59 \
 	python3-mysqldb \
 	python-is-python3 \
 	pkgconf \
 	libicu-dev \
 	libsrtp2-1 \
 	libspandsp2 \
-	libncurses5 \
 	autoconf \
 	libical3 \
 	libneon27 \
@@ -652,14 +697,35 @@ in-target env PHPVERSION=8.2 apt-get -y install \
 	libiksemel3 \
 	libresample1 \
 	libgmime-3.0-0 \
-	libc-client2007e \
 	imagemagick
+
+# progress tracking
+db_progress STOP
+db_progress START 0 100 sngdistro/title
+db_progress SET 67
+db_progress INFO sngdistro/forums
+sleep 1
+
+# begin working around failures to pre-install things on Debian 13
+if [ $fpbxdistro == "12" ]; then
+logger -t sng "Even more packages for FreePBX Distro ${fpbxdistro}"
+in-target apt-get -y install \
+	ipset \
+	iptables \
+	iptables-persistent \
+	libavdevice59 \
+	libncurses5 \
+	libc-client2007e
+fi
+# end working around failures to pre-install things on Debian 13
 
 # extra cloud things
 if [ $spicelevel == "fog" ]; then
 	logger -t sng "Additional cloud utilities on ${spicelevel}"
-	in-target apt-get -y install cloud-init cloud-utils
+	in-target apt-get -y install cloud-init
 fi
+
+db_progress SET 69
 
 # consider the free and non-free firmware
 if [ $spicelevel == "oso" ]; then
@@ -670,17 +736,23 @@ else
 	in-target apt-get -y install firmware-linux
 fi
 
+db_progress SET 71
+db_progress INFO sngdistro/astricon
+
 # may need to lock the kernel for DAHDI
 if [ $spicelevel == "oso" ]; then
 	logger -t sng "DO NOT LOCK IN the kernel on ${spicelevel}"
+    db_progress SET 72
 	in-target apt-get -y install linux-image-amd64
 elif [ $spicelevel == "fog" ]; then
 	logger -t sng "DO NOT LOCK IN the kernel on ${spicelevel} but use special cloud image"
+    db_progress SET 73
 	in-target apt-get -y install linux-image-cloud-amd64
 else
 	logger -t sng "TRYING TO LOCK IN the kernel on ${spicelevel}"
 	if [ -z "{{ str_locked_kernel }}" ]; then
 		logger -t sng "COULD NOT LOCK IN the kernel on ${spicelevel}"
+        db_progress SET 74
 		in-target apt-get -y install linux-image-amd64
 	else
 		# freeze right there kernel, DAHDI would like a word with you
@@ -707,6 +779,7 @@ else
 			in-target wget -q -i /tmp/dahdi-supported-linux-signed-amd64.urls -P /var/tmp/
 		fi
 
+        db_progress SET 75
 		# prerequired manual packages (automatically included with linux-image-amd64)
 		in-target apt-get -y install \
 			apparmor \
@@ -718,11 +791,18 @@ else
 			linux-base
 		# the locked kernel will almost always require manual dpkg install (since it won't be on the stock ISO)
 		fishing=$(ls /target/var/tmp/linux-image* | grep -m 1 "{{ str_locked_kernel }}" | cut -f3-8 -d/)
+        db_progress SET 77
+        db_progress INFO sngdistro/tango
 		in-target apt-get -y install linux-image-{{ str_locked_kernel }} || in-target dpkg -i $fishing
 	fi
 fi
 
+db_progress SET 80
+
 in-target sync
+
+# helper mount for Debian 13
+umount /target/media/cdrom || true
 
 logger -t sng "END GENERIC PARTS OF LATE COMMAND"
 logger -t sng "END LATE COMMAND"

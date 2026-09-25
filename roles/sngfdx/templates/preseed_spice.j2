@@ -1,9 +1,7 @@
 {% include 'header.j2' %}
 
-{% if item.passbytes|int > 0 %}
-# sng_early_command is entirely for password changes (only on cdrom)
+# sng_early_command is for password changes and late command templates (only on cdrom)
 d-i preseed/early_command string /cdrom/sng_early_{{ item.spice }}_command
-{% endif %}
 
 {% if item.passbytes|int >= 0 %}
 # User default password. The way its been.

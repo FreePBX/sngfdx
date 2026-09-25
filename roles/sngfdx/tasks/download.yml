@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Sangoma US Inc.
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/download.yml
+# file: sngfdx/tasks/download.yml
 
 - name: Download FreePBX Packages.gz file.
   ansible.builtin.get_url:
