@@ -13,17 +13,22 @@ umount /media || true
 {% if item.passbytes|int > 0 %}
 
 # set up password splashing command to run at end of install
+# TODO: db_x_loadtemplatefile instead of debconf-loadtemplate
 cat << EOFF > /usr/lib/finish-install.d/09sngsplashpass
 #!/bin/sh
 {% include 'header.j2' %}
 
 set -e
 . /usr/share/debconf/confmodule
-debconf-loadtemplate --merge sngsplashpass /run/sngsplashpass.template
+debconf-loadtemplate --merge sngsplashpass /run/sngsplashpass.templates
 . /run/sngsplashpass
 EOFF
 
-cat << EOFMNOROOT > /run/sngsplashpass.template
+cat << EOFMNOROOT > /run/sngsplashpass.templates
+Template: sngsplashpass/title
+Type: title
+Description: Sangoma Password Generation
+
 Template: sngsplashpass/subst
 Type: note
 Description: Please write down the passwords
@@ -63,6 +68,7 @@ db_get partman-crypto/passphrase
 db_subst sngsplashpass/subst newpassroot "\$newpassroot"
 db_subst sngsplashpass/subst newpassuser "\$newpassuser"
 db_subst sngsplashpass/subst newpassdisk "\$RET"
+db_settitle sngsplashpass/title
 db_input critical sngsplashpass/subst || true
 if ! db_go ; then
 	# abort
@@ -84,11 +90,39 @@ db_set partman-crypto/passphrase "\$newpassdisk"
 db_set partman-crypto/passphrase-again "\$newpassdisk"
 EOFH
 
-chmod 0444 /run/sngsplashpass.template
+chmod 0444 /run/sngsplashpass.templates
 chmod 0555 /usr/lib/finish-install.d/09sngsplashpass
 chmod 0555 /run/sngsplashpass
 chmod 0555 /run/sngdiskpass
 
 {% endif %}
+
+cat << EOFDT > /run/sngdistro.templates
+Template: sngdistro/title
+Type: title
+Description: FreePBX Distro ${fpbxdistro} ISO "${spicelevel}" spice with FreePBX ${fpbxversion} and Asterisk ${asteriskversion}
+
+Template: sngdistro/packages
+Type: text
+Description: Preparing additional packages for FreePBX...
+
+Template: sngdistro/pitch
+Type: text
+Description: Keep Kit and Tango hopping! Buy Sangoma P-Series phones - They work great with Asterisk and FreePBX!
+
+Template: sngdistro/forums
+Type: text
+Description: Join the FreePBX Community Forums! https://community.freepbx.org
+
+Template: sngdistro/astricon
+Type: text
+Description: Visit us IRL at AstriCon! https://astricon.net
+
+Template: sngdistro/tango
+Type: text
+Description: FUN FACTS: Tango is the name of the FreePBX frog mascot! Kit is the Asterisk mascot!
+EOFDT
+
+chmod 0444 /run/sngdistro.templates
 
 logger -t sng "END EARLY COMMAND"

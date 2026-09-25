@@ -14,7 +14,7 @@
             label autofpbx{{ _test }}{{ _serial }}{{ _disk }}{{ _spice|lower }}{{ _astver }}
                 menu label ^{{ _opt }} YES WIPE DISKS AND INSTALL "{{ _spice }}" {{ (_test|upper ~ ' ' ~ _serial|upper ~ ' ' ~ _disk|upper)|trim }}
                 kernel /install.amd/vmlinuz
-                append spicelevel={{ _spice|lower }} fpbxrepo={{ _test|default('prod',true) }} asteriskversion={{ _astver }} initrd=/install.amd/initrd.gz auto=true file=/cdrom/preseed.cfg dmraid=false priority=critical interface=auto {{ localized }} {% if _serial == '' %}vga=788{% else %}console=tty0 console=ttyS0,115200n8{% endif %} {% if _disk != '' %}sngdiskrecipe={{ _disk }}{% endif %} --- quiet
+                append spicelevel={{ _spice|lower }} fpbxrepo={{ _test|default('prod',true) }} fpbxdistro={{ str_script_major }} fpbxversion={{ str_freepbx_version }} asteriskversion={{ _astver }} initrd=/install.amd/initrd.gz auto=true file=/cdrom/preseed.cfg dmraid=false priority=critical interface=auto {{ localized }} {% if _serial == '' %}vga=788{% else %}console=tty0 console=ttyS0,115200n8{% endif %} {% if _disk != '' %}sngdiskrecipe={{ _disk }}{% endif %} theme=dark --- quiet
                 text help
     WARNING: The installer will wipe all your disks automatically.
     {% if _disk == '' %}MINIMUM DISK SIZE: 40G PUB, FOG, OSO, UPG // 100G INT, RAID1{% else %}SLAB disk only makes boot, root and swap partitions{% endif %}.
@@ -30,7 +30,7 @@ menu hshift 0
 menu width 70
 menu helpmsgrow 16
 
-menu title {{ str_our_full_name }} BIOS Installer menu
+menu title {{ str_our_full_name }} {{ str_script_major }} BIOS Installer
 
 label howdy
     menu label "Howdy!" says ^Tango the FreePBX mascot :-)
@@ -66,15 +66,13 @@ menu begin beginfreepbxmenu
             menu label ^Back...
             menu exit
             text help
-    18: Long Term Support EOL 2025-10-20
-    20: Long Term Support EOL 2027-10-19
-    21: Standard release  EOL 2026-10-18
-    22: Long Term Support EOL 2029-10-16
-    23: Standard release  EOL 2027-10-15
+{% for astver in list_ast_version_range %}
+    {{ astver }}: {{ map_ast_version_type[astver | int] }}
+{% endfor %}
             endtext
 
-{% for astver in ["18", "20", "21", "22", "23"] %}
-{% if not (spice == "INT" and not astver == "22") %}
+{% for astver in list_ast_version_range %}
+{% if not (spice == "INT" and not astver == str_ast_version_warehouse) %}
         menu begin {{ spice }}{{ astver }}menu
             menu title Install "{{ spice }}" FreePBX {{ str_freepbx_version }} with Asterisk {{ astver }}
             menu label Install "{{ spice }}" FreePBX {{ str_freepbx_version }} with Asterisk {{ astver[0] }}^{{ astver[-1] }}
