@@ -52,7 +52,7 @@ str_script_major: "{{ str_deb_version }}"
 str_script_version: "{{ str_script_major }}.{{ str_script_minor }}.{{ str_script_build }}"
 str_script_version_underscore: "{{ str_script_version | regex_replace('\\.|-', '_') }}"
 str_script_version_hyphen: "{{ str_script_version | regex_replace('\\.', '-') }}"
-str_script_name: "sngfd_factory_12"
+str_script_name: "sngfdx"
 str_script_sha512sum: "TBD"
 
 # Computed first part of the name of the output iso file

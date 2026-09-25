@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/commands.yml
+# file: sngfdx/tasks/commands.yml
 
 - name: Several commands.
   ansible.builtin.template:

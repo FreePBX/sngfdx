@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025-2026 Sangoma US Inc.
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/extract.yml
+# file: sngfdx/tasks/extract.yml
 
 - name: Get temp selections file in place.
   ansible.builtin.copy:

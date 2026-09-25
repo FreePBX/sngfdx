@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: default-playbook.yml
+# file: sngfdx-playbook.yml
 
 - name: Default playbook. (Just enough glue to run this one role.)
   hosts: all
   roles:
-    - sngfd_factory_12
+    - sngfdx
