@@ -53,9 +53,9 @@ sng_{{ item.raid }}_recipe ::				\
 {% endif %}
 	.						\
 {% if item.spice == "int" %}
-   {{ item.root_partition_size }} 9888 {{ item.root_partition_size }} ext4 \
+   {{ item.root_partition_size }} 9888 {{ item.root_partition_size }} {{ str_filesystem_type }} \
 {% else %}
-	1100 1200 2500 ext4				\
+	1100 1200 2500 {{ str_filesystem_type }}				\
 {% endif %}
 		label{ sngroot }			\
 		$defaultignore{ }			\
@@ -64,7 +64,7 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ / }				\
 		options/discard{ discard }		\
 	.						\
@@ -76,7 +76,7 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ swap }				\
 		format{ }				\
 	.						\
-	100 777 2000 ext4				\
+	100 777 2000 {{ str_filesystem_type }}				\
 		label{ sngsrv }				\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -84,13 +84,13 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /srv }			\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/nosuid{ nosuid }		\
 	.						\
-	100 777 2000 ext4				\
+	100 777 2000 {{ str_filesystem_type }}				\
 		label{ snghome }			\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -98,13 +98,13 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /home }			\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/nosuid{ nosuid }		\
 	.						\
-	100 777 2000 ext4				\
+	100 777 2000 {{ str_filesystem_type }}				\
 		label{ sngusrlocal }			\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -112,11 +112,11 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /usr/local }		\
 		options/discard{ discard }		\
 	.						\
-	100 777 2000 ext4				\
+	100 777 2000 {{ str_filesystem_type }}				\
 		label{ sngtmp }				\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -124,14 +124,14 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /tmp }			\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/noexec{ noexec }		\
 		options/nosuid{ nosuid }		\
 	.						\
-	4800 5555 10000 ext4				\
+	4800 5555 10000 {{ str_filesystem_type }}				\
 		label{ sngusr }				\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -139,11 +139,11 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /usr }			\
 		options/discard{ discard }		\
 	.						\
-	3500 5555 15151 ext4				\
+	3500 5555 15151 {{ str_filesystem_type }}				\
 		label{ sngvar }				\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -151,13 +151,13 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /var }			\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/nosuid{ nosuid }		\
 	.						\
-	200 1111 5000 ext4				\
+	200 1111 5000 {{ str_filesystem_type }}				\
 		label{ sngvartmp }			\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -165,14 +165,14 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /var/tmp }			\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/noexec{ noexec }		\
 		options/nosuid{ nosuid }		\
 	.						\
-	100 5555 15151 ext4				\
+	100 5555 15151 {{ str_filesystem_type }}				\
 		label{ sngvarlog }			\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -180,14 +180,14 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /var/log }			\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/noexec{ noexec }		\
 		options/nosuid{ nosuid }		\
 	.						\
-	100 1111 5000 ext4				\
+	100 1111 5000 {{ str_filesystem_type }}				\
 		label{ sngvarlogaudit }			\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -195,14 +195,14 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /var/log/audit }		\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\
 		options/noexec{ noexec }		\
 		options/nosuid{ nosuid }		\
 	.						\
-	100 5555 -1 ext4				\
+	100 5555 -1 {{ str_filesystem_type }}				\
 		label{ sngvarspool }			\
 		$defaultignore{ }			\
 		$lvmok{ }				\
@@ -210,7 +210,7 @@ sng_{{ item.raid }}_recipe ::				\
 		method{ format }			\
 		format{ }				\
 		use_filesystem{ }			\
-		filesystem{ ext4 }			\
+		filesystem{ {{ str_filesystem_type }} }			\
 		mountpoint{ /var/spool }		\
 		options/discard{ discard }		\
 		options/nodev{ nodev }			\

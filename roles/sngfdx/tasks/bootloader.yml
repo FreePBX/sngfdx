@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/bootloader.yml
+# file: sngfdx/tasks/bootloader.yml
 
 - name: BIOS ISOLINUX menu.
   ansible.builtin.template:

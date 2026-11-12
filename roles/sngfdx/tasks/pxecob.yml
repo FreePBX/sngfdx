@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/pxecob.yml
+# file: sngfdx/tasks/pxecob.yml
 
 # Description: Sets up PXE boot with Cobbler over the network for faster warehouse factory installs vs. USB stick.
 

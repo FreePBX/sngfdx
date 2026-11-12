@@ -1,19 +1,19 @@
 # SPDX-FileCopyrightText: 2025-2026 Sangoma US Inc.
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/extract.yml
+# file: sngfdx/tasks/extract.yml
 
 - name: Get temp selections file in place.
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: "{{ dtmp.path }}"
   loop:
-    - selections
+    - "selections.sngfdx{{ str_deb_version }}"
 
 - name: Get list of desired packages to extract from ISO.
   when: dir_deb_files != "" and bool_refresh_packages | bool
   ansible.builtin.shell:
-    cmd: grep -v -e deinstall$ {{ dtmp.path }}/selections | cut -f1 | sed 's/$/*.deb/'
+    cmd: grep -v -e deinstall$ {{ dtmp.path }}/selections.sngfdx{{ str_deb_version }} | cut -f1 | sed 's/$/*.deb/'
   register: extract_packages
 
 - name: Find packages to extract from ISO.

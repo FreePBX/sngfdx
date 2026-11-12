@@ -1,9 +1,9 @@
 The "selections" file is generated from an already installed
 FreePBX 17 system on Debian 12 using the command:
 
-$ dpkg --get-selections > selections
+$ dpkg --get-selections > selections.sngfdx12
 
-The "selections" file in this directory is then processed
+The "selections.sngfdx12" file in this directory is then processed
 during ISO building to include required Debian packages
 from the vanilla upstream Debian ISO. (This can help speed
 up installations significantly.)

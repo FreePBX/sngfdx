@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Sangoma US Inc.
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/preseeds.yml
+# file: sngfdx/tasks/preseeds.yml
 
 - name: Initial preseed.cfg
   ansible.builtin.template:

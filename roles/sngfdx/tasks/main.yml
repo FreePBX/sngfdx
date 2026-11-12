@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025-2026 Sangoma US Inc.
 # SPDX-License-Identifier: GPL-2.0-only
 ---
-# file: sngfd_factory_12/tasks/main.yml
+# file: sngfdx/tasks/main.yml
 
 - name: Check for an existing output ISO with the same name.
   ansible.builtin.stat:
@@ -15,12 +15,12 @@
 
 - name: Calculate a hash of the current files of this particular sngfd.
   ansible.builtin.shell:
-    cmd: find roles/sngfd_factory_12 -path ./.git -prune -o -follow -type f -exec sha256sum {} + | sort | sha256sum | cut -f1 -d' '
-  register: sngfd_sha256
+    cmd: find roles/sngfdx -path ./.git -prune -o -follow -type f -exec sha256sum {} + | sort | sha256sum | cut -f1 -d' '
+  register: sngfdx_sha256
 
 - name: Place the stdout hash into a string.
   ansible.builtin.set_fact:
-    str_sngfd_sha256: "{{ sngfd_sha256.stdout }}"
+    str_sngfdx_sha256: "{{ sngfdx_sha256.stdout }}"
 
 - name: Make temporary directories and possibly one stickier directory for downloads.
   ansible.builtin.include_tasks:
